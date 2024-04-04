@@ -13,15 +13,15 @@ from torch.utils.data import DataLoader
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, default="Pendulum-random")
-    parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--seed", type=int, default=2)
     parser.add_argument("--gpu", type=str, default="cuda:0")
     
     # Hyper-parameter for offline training
-    parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--batch_size", type=int, default=256)
+    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--batch_size", type=int, default=128)
     
     # Hyper-parameter for 1SAC+incentive
-    parser.add_argument("--temp", type=float, default=1.0)
+    parser.add_argument("--temp", type=float, default=0.8)
     # Hyper-parameter for 2SAC+incentive
     parser.add_argument("--ratio", type=int, default=1)
     
@@ -32,20 +32,20 @@ def main() -> None:
     # Environment path
     parser.add_argument("--save_dir", type=str, default="/home/featurize/checkpoints")
     parser.add_argument("--python_file", type=str, default="/environment/miniconda3/envs/ope/bin/python")
-    parser.add_argument("--eval_file", type=str, default="/home/featurize/policy_eval/eval.py")
+    parser.add_argument("--eval_file", type=str, default="/home/featurize/OPE4RL/policy_eval/eval.py")
     
     # Configuration of training
-    parser.add_argument("--collect_epoch", type=int, default=100)
-    parser.add_argument("--n_epoch", type=int, default=200)
-    parser.add_argument("--n_episodes", type=int, default=2)
+    parser.add_argument("--collect_epoch", type=int, default=50)
+    parser.add_argument("--n_epoch", type=int, default=100)
+    parser.add_argument("--n_episodes", type=int, default=4)
     parser.add_argument("--algo", type=str, default="iw") # "iw" or "mb"
-    parser.add_argument("--method", type=str, default="baseline1") # "new" or "baseline"
+    parser.add_argument("--method", type=str, default="baseline2") # "new" or "baseline"
     parser.add_argument('--upload', dest='upload', action='store_true', help='Enable upload')
     parser.add_argument('--no-upload', dest='upload', action='store_false', help='Disable upload')
     parser.add_argument('--collect', dest='collect', action='store_true', help='Enable collect')
     parser.add_argument('--no-collect', dest='collect', action='store_false', help='Disable collect')
-    parser.set_defaults(upload=False)
-    parser.set_defaults(collect=False)
+    parser.set_defaults(upload=True)
+    parser.set_defaults(collect=True)
 
     args = parser.parse_args()
 

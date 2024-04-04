@@ -1,3 +1,4 @@
+import argparse
 import pandas as pd
 import numpy as np
 import os
@@ -9,37 +10,59 @@ from d3rlpy.utils import run
 from save import process_baseline1
 
 
-env = gym.make("Pendulum-v1")
-d3rlpy.seed(0)
-d3rlpy.envs.seed_env(env, 0)
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--method", type=str, default="baseline1")
+    parser.add_argument("--seed", type=int, default=1)
+    args = parser.parse_args()
+    
+    method = args.method
+    save_dir = "/home/featurize/checkpoints"
+    dataset = "Pendulum-random"
+    python_file = "/environment/miniconda3/envs/ope/bin/python"
+    eval_file = "/home/featurize/OPE4RL/policy_eval/eval.py"
+    lr = 0.003
+    lr_decay = 1.0
+    algo = "iw"
+    seed = args.seed
+
+    env = gym.make("Pendulum-v1")
+    d3rlpy.seed(0)
+    d3rlpy.envs.seed_env(env, 0)
 
 
-dir_path = "/home/xiaoan/checkpoints/baseline2/Pendulum-random"
-x = os.listdir(dir_path)
+    dir_path = "{}/{}/{}".format(save_dir, method, dataset)
+    hp_list = os.listdir(dir_path)
 
-if "baseline1" in dir_path:
-    process_baseline1()
+    # if method == "baseline1":
+    #     process_baseline1(save_dir=save_dir, dataset=dataset, python_file=python_file,
+    #                      eval_file=eval_file, lr=lr, lr_decay=lr_decay, algo=algo)
 
-estimate_list = []
+    estimate_list = []
 
-for _ in x:
-    y = os.path.join(dir_path,_,"seed0") # ,"iw-0.003-0.8"
-    estiamte = pd.read_csv(os.path.join(y,"ope.csv")).iloc[0,0]
-    estimate_list.append(estiamte)
+    for hp in hp_list:
+        seed_dir_path = os.path.join(dir_path, hp ,"seed{}".format(seed))
+        estiamte = pd.read_csv(os.path.join(seed_dir_path, "ope.csv")).iloc[0,0]
+        estimate_list.append(estiamte)
 
-print(estimate_list)
-print(len(estimate_list))
-index = sorted(range(len(estimate_list)), key=lambda i: estimate_list[i], reverse=True)[0]
-print(index)
-print(max(estimate_list))
-print(x[index])
+    print(estimate_list)
+    print(len(estimate_list))
+    index = sorted(range(len(estimate_list)), key=lambda i: estimate_list[i], reverse=True)[0]
+    print(index)
+    print(max(estimate_list))
+    print(hp_list[index])
 
-best_hp_model = os.path.join(dir_path,x[index],"seed0","model_200.pt")
-model = torch.load(best_hp_model)
-evaluator = d3rlpy.metrics.EnvironmentEvaluator(env,gamma=0.995,n_trials=1000)
-test_score_1_mean, test_score_1_std, test_score_mean, test_score_std, _ = evaluator(model)
+    best_hp_model = os.path.join(dir_path, hp_list[index],"seed{}".format(seed), "model_100.pt")
+    model = torch.load(best_hp_model)
+    evaluator = d3rlpy.metrics.EnvironmentEvaluator(env,gamma=0.995,n_trials=100)
+    test_score_1_mean, test_score_1_std, test_score_mean, test_score_std, _ = evaluator(model)
 
-print("Return mean when gamma = 1.0:", test_score_1_mean)
-print("Return std when gamma = 1.0:", test_score_1_std)
-print("Return mean when gamma = 0.995:", test_score_mean)
-print("Return std when gamma = 0.995:", test_score_std)
+    # print("Return mean when gamma = 1.0:", test_score_1_mean)
+    # print("Return std when gamma = 1.0:", test_score_1_std)
+    print("Return mean when gamma = 0.995:", test_score_mean)
+    print("Return std when gamma = 0.995:", test_score_std)
+    
+    
+
+if __name__ == "__main__":
+    main()
