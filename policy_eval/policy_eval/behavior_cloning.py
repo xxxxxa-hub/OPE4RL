@@ -27,9 +27,7 @@ class BehaviorCloning(object):
                state_dim,
                action_spec,
                lr,
-               lr_decay,
-               weight_decay,
-               eval_interval):
+               weight_decay):
     """Creates networks.
 
     Args:
@@ -41,14 +39,7 @@ class BehaviorCloning(object):
     self.actor = actor_lib.Actor(state_dim, action_spec)
     self.action_spec = action_spec
 
-    lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
-    initial_learning_rate=lr,
-    decay_steps=5 * eval_interval,
-    decay_rate=lr_decay,
-    staircase=True
-    )
-
-    self.optimizer = tfa_optimizers.AdamW(learning_rate=lr_schedule,
+    self.optimizer = tfa_optimizers.AdamW(learning_rate=lr,
                                           weight_decay=weight_decay)
 
   def __call__(self, states, actions):

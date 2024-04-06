@@ -3,6 +3,7 @@ import pdb
 import numpy as np
 import d3rlpy
 import pickle
+import d4rl
 import gym
 import torch
 from d3rlpy.dataset import ReplayBuffer_, D4rlDataset, get_cartpole, get_pendulum, infinite_loader
@@ -12,34 +13,34 @@ from torch.utils.data import DataLoader
 # 0, 1, 1234
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, default="Pendulum-random")
-    parser.add_argument("--seed", type=int, default=2)
-    parser.add_argument("--gpu", type=str, default="cuda:0")
+    parser.add_argument("--dataset", type=str, default="halfcheetah-medium-replay-v2")
+    parser.add_argument("--method", type=str, default="baseline1") # "new" or "baseline"
+    parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--gpu", type=str, default="cuda:1")
     
     # Hyper-parameter for offline training
     parser.add_argument("--lr", type=float, default=1e-4)
-    parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--batch_size", type=int, default=512)
     
     # Hyper-parameter for 1SAC+incentive
-    parser.add_argument("--temp", type=float, default=0.8)
+    parser.add_argument("--temp", type=float, default=0.2)
     # Hyper-parameter for 2SAC+incentive
     parser.add_argument("--ratio", type=int, default=1)
     
     # Hyper-parameter for pre-trained estimator
     parser.add_argument("--estimator_lr", type=float, default=0.003)
-    parser.add_argument("--estimator_lr_decay", type=float, default=1.0)    
     
     # Environment path
-    parser.add_argument("--save_dir", type=str, default="/home/featurize/checkpoints")
-    parser.add_argument("--python_file", type=str, default="/environment/miniconda3/envs/ope/bin/python")
-    parser.add_argument("--eval_file", type=str, default="/home/featurize/OPE4RL/policy_eval/eval.py")
+    parser.add_argument("--save_dir", type=str, default="/home/xiaoan/checkpoints_v4")
+    parser.add_argument("--python_file", type=str, default="/home/xiaoan/miniconda3/envs/ope/bin/python")
+    parser.add_argument("--eval_file", type=str, default="/home/xiaoan/OPE4RL/policy_eval/eval.py")
     
     # Configuration of training
     parser.add_argument("--collect_epoch", type=int, default=50)
-    parser.add_argument("--n_epoch", type=int, default=100)
+    parser.add_argument("--n_epoch", type=int, default=80)
     parser.add_argument("--n_episodes", type=int, default=4)
-    parser.add_argument("--algo", type=str, default="iw") # "iw" or "mb"
-    parser.add_argument("--method", type=str, default="baseline2") # "new" or "baseline"
+    parser.add_argument("--algo", type=str, default="mb") # "iw" or "mb"
+    
     parser.add_argument('--upload', dest='upload', action='store_true', help='Enable upload')
     parser.add_argument('--no-upload', dest='upload', action='store_false', help='Disable upload')
     parser.add_argument('--collect', dest='collect', action='store_true', help='Enable collect')
@@ -115,13 +116,13 @@ def main() -> None:
             evaluators={"environment": d3rlpy.metrics.EnvironmentEvaluator(env,gamma=0.995,n_trials=args.n_episodes)},
             python_file=args.python_file,
             eval_file=args.eval_file,
-            dir_path="{}/{}/{}/{}-{}/seed{}".format(args.save_dir, args.method, args.dataset, 
-                                                          args.lr, args.batch_size, args.seed),
+            save_dir=args.save_dir,
+            dir_path="{}/{}/{}/{}/seed{}".format(args.save_dir, args.method, args.dataset, 
+                                                          args.lr, args.seed),
             seed = args.seed,
             env_name = args.dataset,
             collect_epoch = args.collect_epoch,
             estimator_lr = args.estimator_lr,
-            estimator_lr_decay = args.estimator_lr_decay,
             temp=args.temp,
             algo = args.algo,
             upload = args.upload,
@@ -135,13 +136,13 @@ def main() -> None:
             evaluators={"environment": d3rlpy.metrics.EnvironmentEvaluator(env,gamma=0.995,n_trials=args.n_episodes)},
             python_file=args.python_file,
             eval_file=args.eval_file,
-            dir_path="{}/{}/{}/{}-{}-{}/seed{}".format(args.save_dir, args.method, args.dataset, 
-                                                          args.lr, args.batch_size, args.temp, args.seed),
+            save_dir=args.save_dir,
+            dir_path="{}/{}/{}/{}/{}/seed{}".format(args.save_dir, args.method, args.dataset, 
+                                                          args.algo, args.lr, args.seed),
             seed = args.seed,
             env_name = args.dataset,
             collect_epoch = args.collect_epoch,
             estimator_lr = args.estimator_lr,
-            estimator_lr_decay = args.estimator_lr_decay,
             temp=args.temp,
             algo = args.algo,
             upload = args.upload,

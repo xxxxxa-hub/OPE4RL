@@ -63,6 +63,8 @@ from ..utility import (
 from .explorers import Explorer
 from ...utils import save_policy,run
 import pandas as pd
+from scipy.stats import norm
+
 
 
 __all__ = [
@@ -389,12 +391,12 @@ class QLearningAlgoBase(
         epoch_callback: Optional[Callable[[Self, int, int], None]] = None,
         python_file: str = None,
         eval_file: str = None,
+        save_dir: str = None,
         dir_path: str = None,
         seed: int = 0,
         env_name: str = None,
         collect_epoch: int = 50,
         estimator_lr: float = 0.003,
-        estimator_lr_decay: float = 0.86,
         temp: float = 1.0,
         algo: str = None,
         upload: bool = False,
@@ -455,12 +457,12 @@ class QLearningAlgoBase(
                 epoch_callback=epoch_callback,
                 python_file=python_file,
                 eval_file=eval_file,
+                save_dir=save_dir,
                 dir_path=dir_path,
                 seed=seed,
                 env_name=env_name,
                 collect_epoch=collect_epoch,
                 estimator_lr=estimator_lr,
-                estimator_lr_decay=estimator_lr_decay,
                 temp=temp,
                 algo=algo,
                 upload=upload,
@@ -536,11 +538,9 @@ class QLearningAlgoBase(
 
         if upload:
             new_run = wandb.init(
-                project="{}-{}".format(env_name, method),
-                name="Baseline1-{}-{}-{}-{}".format(self.config.actor_learning_rate,
-                                        self.config.batch_size, algo, seed),
+                project="{}-{}-v4".format(env_name, method),
+                name="Baseline1-{}-{}-{}".format(self.config.actor_learning_rate, algo, seed),
                 config={"learning_rate": self.config.actor_learning_rate,
-                        "batch_size": self.config.batch_size,
                         "algo": algo,
                         "seed": seed}
             )
@@ -618,12 +618,10 @@ class QLearningAlgoBase(
                                         test_score])
                 
                 if upload:
-                    wandb.log({"epoch":epoch,
-                            "outer_actor_loss": np.mean(epoch_loss["actor_loss"]),
-                            "outer_critic_loss": np.mean(epoch_loss["critic_loss"]),
+                    wandb.log({"actor_loss": np.mean(epoch_loss["actor_loss"]),
+                            "critic_loss": np.mean(epoch_loss["critic_loss"]),
                             "temp_loss": np.mean(epoch_loss["temp_loss"]),
                             "temp": np.mean(epoch_loss["temp"]),
-                            "Oracle_1.0": test_score_1,
                             "Oracle_0.995": test_score})
             
             elif epoch > collect_epoch:
@@ -642,12 +640,10 @@ class QLearningAlgoBase(
                                         test_score])
                 
                 if upload:
-                    wandb.log({"epoch":epoch,
-                            "outer_actor_loss": np.mean(epoch_loss["actor_loss"]),
-                            "outer_critic_loss": np.mean(epoch_loss["critic_loss"]),
+                    wandb.log({"actor_loss": np.mean(epoch_loss["actor_loss"]),
+                            "critic_loss": np.mean(epoch_loss["critic_loss"]),
                             "temp_loss": np.mean(epoch_loss["temp_loss"]),
                             "temp": np.mean(epoch_loss["temp"]),
-                            "Oracle_1.0": test_score_1,
                             "Oracle_0.995": test_score})
             
                     
@@ -666,12 +662,12 @@ class QLearningAlgoBase(
             epoch_callback: Optional[Callable[[Self, int, int], None]] = None,
             python_file: str = None,
             eval_file: str = None,
+            save_dir: str = None,
             dir_path: str = None,
             seed: int = 0,
             env_name: str = None,
             collect_epoch: int = 50,
             estimator_lr: float = 0.003,
-            estimator_lr_decay: float = 0.86,
             temp: float = 1.0,
             algo: str = None,
             upload: bool = False,
@@ -731,12 +727,10 @@ class QLearningAlgoBase(
 
             if upload:
                 new_run = wandb.init(
-                    project="{}-{}".format(env_name, method),
-                    name="Baseline2-{}-{}-{}-{}-{}".format(self.config.actor_learning_rate,
-                                            self.config.batch_size, temp, algo, seed),
+                    project="{}-{}-v4".format(env_name, method),
+                    name="Baseline2-{}-{}-{}".format(self.config.actor_learning_rate, algo, seed), # temp
                     config={"actor_learning_rate": self.config.actor_learning_rate,
-                            "batch_size": self.config.batch_size,
-                            "temp": temp,
+                            # "temp": temp,
                             "algo": algo,
                             "seed": seed}
                 )
@@ -767,6 +761,9 @@ class QLearningAlgoBase(
                     reward_incentive_reduce_mean = reward_incentive - torch.tensor(np.mean(reward_incentive_list))
                     normalized_reward_incentive = reward_incentive_reduce_mean / torch.std(torch.tensor(reward_incentive_list), unbiased=False)
                 
+                cdf_value = norm.cdf(normalized_reward_incentive.cpu(), loc=0.0, scale=1.0)
+                # cdf_value = np.clip(cdf_value,0.2,0.8)
+                
                 for itr in range_gen:
                     # pick transitions
                     states, actions, next_states, rewards, masks, _, _ = next(dataloader)
@@ -777,8 +774,7 @@ class QLearningAlgoBase(
                     next_states = next_states.to(self._device)
                     masks = masks.to(self._device)
 
-
-                    loss = self.update(states, actions, next_states, rewards + temp * normalized_reward_incentive, masks)
+                    loss = self.update(states, actions, next_states, 2 * rewards * (1 - cdf_value), masks) # rewards + temp * normalized_reward_incentive
                     # record metrics
                     for name, val in loss.items():
                         epoch_loss[name].append(val)
@@ -817,10 +813,10 @@ class QLearningAlgoBase(
                     run(device=self._device.split(":")[-1],
                         python_file=python_file,
                         eval_file=eval_file,
+                        save_dir=save_dir,
                         env_name=env_name,
                         lr=estimator_lr,
                         policy_path="{}/policy.pkl".format(dir_path),
-                        lr_decay=estimator_lr_decay,
                         seed=seed,
                         algo=algo)
 
@@ -844,13 +840,13 @@ class QLearningAlgoBase(
                                             test_score])
                     
                     if upload:
-                        wandb.log({"epoch":epoch,
-                                "outer_actor_loss": np.mean(epoch_loss["actor_loss"]),
-                                "outer_critic_loss": np.mean(epoch_loss["critic_loss"]),
+                        wandb.log({"actor_loss": np.mean(epoch_loss["actor_loss"]),
+                                "critic_loss": np.mean(epoch_loss["critic_loss"]),
                                 "temp_loss": np.mean(epoch_loss["temp_loss"]),
                                 "temp": np.mean(epoch_loss["temp"]),
                                 "normalized_reward_incentive": normalized_reward_incentive,
-                                "Oracle_1.0": test_score_1,
+                                "cdf_value": cdf_value,
+                                "Estimate": estimate,
                                 "Oracle_0.995": test_score})
                 
                 # difference is we do not have real value, so we use real value at 100 epoch
@@ -864,10 +860,10 @@ class QLearningAlgoBase(
                     run(device=self._device.split(":")[-1],
                         python_file=python_file,
                         eval_file=eval_file,
+                        save_dir=save_dir,
                         env_name=env_name,
                         lr=estimator_lr,
                         policy_path="{}/policy.pkl".format(dir_path),
-                        lr_decay=estimator_lr_decay,
                         seed=seed,
                         algo=algo)
 
@@ -891,13 +887,13 @@ class QLearningAlgoBase(
                                             test_score_after_100])
                     
                     if upload:
-                        wandb.log({"epoch":epoch,
-                                "outer_actor_loss": np.mean(epoch_loss["actor_loss"]),
-                                "outer_critic_loss": np.mean(epoch_loss["critic_loss"]),
+                        wandb.log({"actor_loss": np.mean(epoch_loss["actor_loss"]),
+                                "critic_loss": np.mean(epoch_loss["critic_loss"]),
                                 "temp_loss": np.mean(epoch_loss["temp_loss"]),
                                 "temp": np.mean(epoch_loss["temp"]),
                                 "normalized_reward_incentive": normalized_reward_incentive,
-                                "Oracle_1.0": test_score_1_after_100,
+                                "cdf_value": cdf_value,
+                                "Estimate": estimate,
                                 "Oracle_0.995": test_score_after_100})
 
                         

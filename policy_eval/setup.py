@@ -16,7 +16,7 @@ setup(
         "typing-extensions==3.7.4.3",
         "tf-agents==0.9.0",
         "pygame",
-        "protobuf==3.19",
+        "protobuf==3.19.6",
         "keras==2.6.0"
     ]
 )

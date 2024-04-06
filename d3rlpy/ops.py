@@ -12,18 +12,20 @@ from save import process_baseline1
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", type=str, default="Pendulum-replay")
     parser.add_argument("--method", type=str, default="baseline1")
+    parser.add_argument("--algo", type=str, default="iw")
     parser.add_argument("--seed", type=int, default=1)
     args = parser.parse_args()
     
     method = args.method
-    save_dir = "/home/featurize/checkpoints"
-    dataset = "Pendulum-random"
-    python_file = "/environment/miniconda3/envs/ope/bin/python"
-    eval_file = "/home/featurize/OPE4RL/policy_eval/eval.py"
+    save_dir = "/home/xiaoan/checkpoints_v4"
+    dataset = args.dataset
+    python_file = "/home/xiaoan/miniconda3/envs/ope/bin/python"
+    eval_file = "/home/xiaoan/OPE4RL/policy_eval/eval.py"
     lr = 0.003
     lr_decay = 1.0
-    algo = "iw"
+    algo = args.algo
     seed = args.seed
 
     env = gym.make("Pendulum-v1")
@@ -31,7 +33,11 @@ def main():
     d3rlpy.envs.seed_env(env, 0)
 
 
-    dir_path = "{}/{}/{}".format(save_dir, method, dataset)
+    if method == "baseline1":
+        dir_path = "{}/{}/{}".format(save_dir, method, dataset)
+    elif method == "baseline2":
+        dir_path = "{}/{}/{}/{}".format(save_dir, method, dataset, algo)
+
     hp_list = os.listdir(dir_path)
 
     # if method == "baseline1":
@@ -51,10 +57,11 @@ def main():
     print(index)
     print(max(estimate_list))
     print(hp_list[index])
+    print(hp_list)
 
     best_hp_model = os.path.join(dir_path, hp_list[index],"seed{}".format(seed), "model_100.pt")
     model = torch.load(best_hp_model)
-    evaluator = d3rlpy.metrics.EnvironmentEvaluator(env,gamma=0.995,n_trials=100)
+    evaluator = d3rlpy.metrics.EnvironmentEvaluator(env,gamma=0.995,n_trials=500)
     test_score_1_mean, test_score_1_std, test_score_mean, test_score_std, _ = evaluator(model)
 
     # print("Return mean when gamma = 1.0:", test_score_1_mean)

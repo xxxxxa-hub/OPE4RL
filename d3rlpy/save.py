@@ -19,6 +19,7 @@ def process_baseline1(save_dir, dataset, python_file, eval_file, lr, lr_decay, a
             run(device=0,
                 python_file=python_file,
                 eval_file=eval_file,
+                save_dir=save_dir,
                 env_name=dataset,
                 lr=lr,
                 policy_path="{}/policy.pkl".format(seed_dir_path),

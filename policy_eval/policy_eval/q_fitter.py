@@ -49,8 +49,8 @@ class CriticNet(tf.keras.Model):
 class QFitter(object):
   """A critic network that estimates a dual Q-function."""
 
-  def __init__(self, state_dim, action_dim, critic_lr, critic_lr_decay,
-               weight_decay, eval_interval, tau):
+  def __init__(self, state_dim, action_dim, lr,
+               weight_decay, tau):
     """Creates networks.
 
     Args:
@@ -66,14 +66,7 @@ class QFitter(object):
     self.tau = tau
     soft_update(self.critic, self.critic_target, tau=1.0)
 
-    lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
-    initial_learning_rate=critic_lr,
-    decay_steps=5 * eval_interval,
-    decay_rate=critic_lr_decay,
-    staircase=True
-    )
-
-    self.optimizer = tfa_optimizers.AdamW(learning_rate=lr_schedule,
+    self.optimizer = tfa_optimizers.AdamW(learning_rate=lr,
                                           weight_decay=weight_decay)
 
   def __call__(self, states, actions):

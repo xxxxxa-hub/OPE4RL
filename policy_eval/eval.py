@@ -23,6 +23,7 @@ from absl import app
 from absl import flags
 from absl import logging
 import gym
+import d4rl
 from gym.wrappers import time_limit
 import numpy as np
 import tensorflow as tf
@@ -52,13 +53,12 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('env_name', 'Reacher-v2',
                     'Environment for training/evaluation.')
 flags.DEFINE_bool('d4rl', True, 'Whether to use D4RL envs and datasets.')
-flags.DEFINE_string('save_dir', "/home/featurize/checkpoints",
+flags.DEFINE_string('save_dir', "/home/xiaoan/checkpoints",
                     'Directory to save behavior dataset and pretrained behavior or dynamics model.')
 flags.DEFINE_string('d4rl_policy_filename', None,
                     'Path to saved pickle of D4RL policy.')
 flags.DEFINE_integer('seed', 0, 'Fixed random seed for training.')
 flags.DEFINE_float('lr', 3e-4, 'Critic learning rate.')
-flags.DEFINE_float('lr_decay', 1, 'Weight decay.')
 flags.DEFINE_float('weight_decay', 1e-5, 'Weight decay.')
 flags.DEFINE_float('behavior_policy_std', None,
                    'Noise scale of behavior policy.')
@@ -156,20 +156,20 @@ def main(_):
     
 
   if 'fqe' in FLAGS.algo or 'dr' in FLAGS.algo:
-    model = QFitter(env.observation_spec().shape[0],
-                    env.action_spec().shape[0], FLAGS.lr, FLAGS.lr_decay,
-                    FLAGS.weight_decay, FLAGS.eval_interval, FLAGS.tau)
+    model = QFitter(state_dim=env.observation_spec().shape[0],
+                    action_dim=env.action_spec().shape[0], lr=FLAGS.lr,
+                    weight_decay=FLAGS.weight_decay, tau=FLAGS.tau)
   elif 'mb' in FLAGS.algo:
-    model = ModelBased(env.observation_spec().shape[0],
-                       env.action_spec().shape[0], lr=FLAGS.lr, lr_decay=FLAGS.lr_decay,
-                       weight_decay=FLAGS.weight_decay, eval_interval=FLAGS.eval_interval)
+    model = ModelBased(state_dim=env.observation_spec().shape[0],
+                       action_dim=env.action_spec().shape[0], lr=FLAGS.lr,
+                       weight_decay=FLAGS.weight_decay)
   elif 'dual_dice' in FLAGS.algo:
-    model = DualDICE(env.observation_spec().shape[0],
-                     env.action_spec().shape[0], FLAGS.weight_decay)
+    model = DualDICE(state_dim=env.observation_spec().shape[0],
+                     action_dim=env.action_spec().shape[0], weight_decay=FLAGS.weight_decay)
   if 'iw' in FLAGS.algo or 'dr' in FLAGS.algo:
-    behavior = BehaviorCloning(env.observation_spec().shape[0],
-                               env.action_spec(), FLAGS.lr, FLAGS.lr_decay, 
-                               FLAGS.weight_decay, FLAGS.eval_interval)
+    behavior = BehaviorCloning(state_dim=env.observation_spec().shape[0],
+                               action_spec=env.action_spec(), lr=FLAGS.lr,
+                               weight_decay=FLAGS.weight_decay)
 
   @tf.function
   def get_target_actions(states):
@@ -195,10 +195,9 @@ def main(_):
   max_state = tf.reduce_max(behavior_dataset.states, 0)
 
   # restore pre-trained Dynamics Model and Behavior
-  pretrained_dir_path = "{}/{}/{}/checkpoint_{}_{}".format(FLAGS.save_dir,FLAGS.algo, 
+  pretrained_dir_path = "{}/{}/{}/checkpoint_{}".format(FLAGS.save_dir,FLAGS.algo, 
                                                                      FLAGS.env_name,
-                                                                     FLAGS.lr, 
-                                                                     FLAGS.lr_decay)
+                                                                     FLAGS.lr)
   
   print(pretrained_dir_path)
   if os.path.exists(pretrained_dir_path):

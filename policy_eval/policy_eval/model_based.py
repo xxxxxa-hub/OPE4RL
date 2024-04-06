@@ -74,7 +74,7 @@ class RewardModel(tf.keras.Model):
 class ModelBased(object):
   """A class that learns models and estimated returns via rollouts."""
 
-  def __init__(self, state_dim, action_dim, lr, lr_decay, weight_decay, eval_interval):
+  def __init__(self, state_dim, action_dim, lr, weight_decay):
     """Creates networks and optimizers for model based policy evaluation.
 
     Args:
@@ -87,33 +87,13 @@ class ModelBased(object):
     self.rewards_net = RewardModel(state_dim, action_dim)
     self.done_net = RewardModel(state_dim, action_dim)
 
-    lr_schedule_dyn = tf.keras.optimizers.schedules.ExponentialDecay(
-    initial_learning_rate=lr,
-    decay_steps=5 * eval_interval,
-    decay_rate=lr_decay,
-    staircase=True
-    )
-
-    lr_schedule_reward = tf.keras.optimizers.schedules.ExponentialDecay(
-    initial_learning_rate=lr,
-    decay_steps=5 * eval_interval,
-    decay_rate=lr_decay,
-    staircase=True
-    )
-
-    lr_schedule_done = tf.keras.optimizers.schedules.ExponentialDecay(
-    initial_learning_rate=lr,
-    decay_steps=5 * eval_interval,
-    decay_rate=lr_decay,
-    staircase=True
-    )
 
     self.dyn_optimizer = tfa_optimizers.AdamW(
-        learning_rate=lr_schedule_dyn, weight_decay=weight_decay)
+        learning_rate=lr, weight_decay=weight_decay)
     self.reward_optimizer = tfa_optimizers.AdamW(
-        learning_rate=lr_schedule_reward, weight_decay=weight_decay)
+        learning_rate=lr, weight_decay=weight_decay)
     self.done_optimizer = tfa_optimizers.AdamW(
-        learning_rate=lr_schedule_done, weight_decay=weight_decay)
+        learning_rate=lr, weight_decay=weight_decay)
 
   @tf.function
   def update(self, states, actions,
