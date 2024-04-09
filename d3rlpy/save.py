@@ -3,29 +3,53 @@ import torch
 import os
 import pdb
 
-def process_baseline1(save_dir, dataset, python_file, eval_file, lr, lr_decay, algo):
+def process_baseline1(save_dir, dataset, python_file, eval_file, lr, algo):
     dir_path = "{}/baseline1/{}".format(save_dir, dataset)
     hp_list = os.listdir(dir_path)
 
     for hp in hp_list:
         for seed in range(1,6):
-            seed_dir_path = os.path.join(dir_path, hp, "seed{}".format(seed))
+            for epoch in range(60,110,10):
+                seed_dir_path = os.path.join(dir_path, hp, "seed{}".format(seed))
 
-            # save model to pkl
-            model = torch.load(os.path.join(seed_dir_path, "model_100.pt"))
-            save_policy(model, seed_dir_path)
+                # save model to pkl
+                model = torch.load(os.path.join(seed_dir_path, "model_{}.pt".format(epoch)))
+                save_policy(model, seed_dir_path, epoch)
 
-            # estimate
-            run(device=0,
-                python_file=python_file,
-                eval_file=eval_file,
-                save_dir=save_dir,
-                env_name=dataset,
-                lr=lr,
-                policy_path="{}/policy.pkl".format(seed_dir_path),
-                lr_decay=lr_decay,
-                seed=seed,
-                algo=algo)
+                # estimate
+                run(device=0,
+                    python_file=python_file,
+                    eval_file=eval_file,
+                    save_dir=save_dir,
+                    env_name=dataset,
+                    lr=lr,
+                    policy_path="{}/policy_{}.pkl".format(seed_dir_path, epoch),
+                    seed=seed,
+                    algo=algo,
+                    epoch=epoch)
 
-            # on-policy
-            # rollout 100 episodes and save in oracle.csv
+
+def process_baseline2(save_dir, dataset, python_file, eval_file, lr, algo):
+    dir_path = "{}/baseline2/{}/{}".format(save_dir, dataset, algo)
+    hp_list = os.listdir(dir_path)
+
+    for hp in hp_list:
+        for seed in range(1,6):
+            for epoch in range(60,110,10):
+                seed_dir_path = os.path.join(dir_path, hp, "seed{}".format(seed))
+
+                # save model to pkl
+                model = torch.load(os.path.join(seed_dir_path, "model_{}.pt".format(epoch)))
+                save_policy(model, seed_dir_path, epoch)
+
+                # estimate
+                run(device=0,
+                    python_file=python_file,
+                    eval_file=eval_file,
+                    save_dir=save_dir,
+                    env_name=dataset,
+                    lr=lr,
+                    policy_path="{}/policy_{}.pkl".format(seed_dir_path, epoch),
+                    seed=seed,
+                    algo=algo,
+                    epoch=epoch)

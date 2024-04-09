@@ -2,7 +2,7 @@ import pickle
 
 __all__ = ["save_policy"]
 
-def save_policy(model, path):
+def save_policy(model, path, epoch = None):
     saved_dict = {}
     fc0_weight = list(model._impl._modules.policy.parameters())[0].detach().cpu().numpy()
     saved_dict["fc0/weight"] = fc0_weight
@@ -28,7 +28,7 @@ def save_policy(model, path):
     last_fc_log_std_bias = list(model._impl._modules.policy.parameters())[7].detach().cpu().numpy()
     saved_dict["last_fc_log_std/bias"] = last_fc_log_std_bias
 
-    # nonlinearity = "relu"
-    # output_distribution = "tanh_gaussian"
-
-    pickle.dump(saved_dict,open("{}/policy.pkl".format(path),"wb"))
+    if epoch is None:
+        pickle.dump(saved_dict,open("{}/policy.pkl".format(path),"wb"))
+    else:
+        pickle.dump(saved_dict,open("{}/policy_{}.pkl".format(path, epoch),"wb"))

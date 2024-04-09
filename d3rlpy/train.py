@@ -13,14 +13,14 @@ from torch.utils.data import DataLoader
 # 0, 1, 1234
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, default="halfcheetah-medium-replay-v2")
+    parser.add_argument("--dataset", type=str, default="halfcheetah-medium-replay-v0")
     parser.add_argument("--method", type=str, default="baseline1") # "new" or "baseline"
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--gpu", type=str, default="cuda:1")
     
     # Hyper-parameter for offline training
-    parser.add_argument("--lr", type=float, default=1e-4)
-    parser.add_argument("--batch_size", type=int, default=512)
+    parser.add_argument("--lr", type=float, default=3e-4)
+    parser.add_argument("--batch_size", type=int, default=256)
     
     # Hyper-parameter for 1SAC+incentive
     parser.add_argument("--temp", type=float, default=0.2)
@@ -31,14 +31,14 @@ def main() -> None:
     parser.add_argument("--estimator_lr", type=float, default=0.003)
     
     # Environment path
-    parser.add_argument("--save_dir", type=str, default="/home/xiaoan/checkpoints_v4")
+    parser.add_argument("--save_dir", type=str, default="/home/xiaoan/checkpoints_v6")
     parser.add_argument("--python_file", type=str, default="/home/xiaoan/miniconda3/envs/ope/bin/python")
     parser.add_argument("--eval_file", type=str, default="/home/xiaoan/OPE4RL/policy_eval/eval.py")
     
     # Configuration of training
-    parser.add_argument("--collect_epoch", type=int, default=50)
-    parser.add_argument("--n_epoch", type=int, default=80)
-    parser.add_argument("--n_episodes", type=int, default=4)
+    parser.add_argument("--collect_epoch", type=int, default=0)
+    parser.add_argument("--n_epoch", type=int, default=1250)
+    parser.add_argument("--n_episodes", type=int, default=10)
     parser.add_argument("--algo", type=str, default="mb") # "iw" or "mb"
     
     parser.add_argument('--upload', dest='upload', action='store_true', help='Enable upload')
@@ -46,7 +46,7 @@ def main() -> None:
     parser.add_argument('--collect', dest='collect', action='store_true', help='Enable collect')
     parser.add_argument('--no-collect', dest='collect', action='store_false', help='Disable collect')
     parser.set_defaults(upload=True)
-    parser.set_defaults(collect=True)
+    parser.set_defaults(collect=False)
 
     args = parser.parse_args()
 

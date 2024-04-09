@@ -438,6 +438,7 @@ class QLearningAlgoBase(
                 evaluators=evaluators,
                 callback=callback,
                 epoch_callback=epoch_callback,
+                save_dir=save_dir,
                 dir_path=dir_path,
                 seed=seed,
                 env_name=env_name,
@@ -478,6 +479,7 @@ class QLearningAlgoBase(
         evaluators: Optional[Dict[str, EvaluatorProtocol]] = None,
         callback: Optional[Callable[[Self, int, int], None]] = None,
         epoch_callback: Optional[Callable[[Self, int, int], None]] = None,
+        save_dir: str = None,
         dir_path: str = None,
         seed: int = 0,
         env_name: str = None,
@@ -538,7 +540,7 @@ class QLearningAlgoBase(
 
         if upload:
             new_run = wandb.init(
-                project="{}-{}-v4".format(env_name, method),
+                project="{}-{}-{}".format(env_name, method, save_dir.split("_")[-1]),
                 name="Baseline1-{}-{}-{}".format(self.config.actor_learning_rate, algo, seed),
                 config={"learning_rate": self.config.actor_learning_rate,
                         "algo": algo,
@@ -645,9 +647,12 @@ class QLearningAlgoBase(
                             "temp_loss": np.mean(epoch_loss["temp_loss"]),
                             "temp": np.mean(epoch_loss["temp"]),
                             "Oracle_0.995": test_score})
+                
+                if epoch % 20 == 0:
+                    torch.save(self, "{}/model_{}.pt".format(dir_path, epoch))
             
-                    
-        torch.save(self, "{}/model_{}.pt".format(dir_path,epoch))
+
+        # torch.save(self, "{}/model_{}.pt".format(dir_path,epoch))
             
                 
 
@@ -727,7 +732,7 @@ class QLearningAlgoBase(
 
             if upload:
                 new_run = wandb.init(
-                    project="{}-{}-v4".format(env_name, method),
+                    project="{}-{}-{}".format(env_name, method, save_dir.split("_")[-1]),
                     name="Baseline2-{}-{}-{}".format(self.config.actor_learning_rate, algo, seed), # temp
                     config={"actor_learning_rate": self.config.actor_learning_rate,
                             # "temp": temp,
@@ -757,7 +762,7 @@ class QLearningAlgoBase(
                 )
 
 
-                if len(reward_incentive_list) >= 10:
+                if len(reward_incentive_list) >= 3:
                     reward_incentive_reduce_mean = reward_incentive - torch.tensor(np.mean(reward_incentive_list))
                     normalized_reward_incentive = reward_incentive_reduce_mean / torch.std(torch.tensor(reward_incentive_list), unbiased=False)
                 
@@ -774,7 +779,9 @@ class QLearningAlgoBase(
                     next_states = next_states.to(self._device)
                     masks = masks.to(self._device)
 
-                    loss = self.update(states, actions, next_states, 2 * rewards * (1 - cdf_value), masks) # rewards + temp * normalized_reward_incentive
+                    loss = self.update(states=states, actions=actions, next_states=next_states, 
+                                       rewards=rewards.min() + 2 * (rewards - rewards.min()) * cdf_value, 
+                                       masks=masks) # rewards + temp * normalized_reward_incentive
                     # record metrics
                     for name, val in loss.items():
                         epoch_loss[name].append(val)
@@ -895,9 +902,13 @@ class QLearningAlgoBase(
                                 "cdf_value": cdf_value,
                                 "Estimate": estimate,
                                 "Oracle_0.995": test_score_after_100})
+                    
+
+                    if epoch % 10 == 0:
+                        torch.save(self, "{}/model_{}.pt".format(dir_path, epoch))
 
                         
-            torch.save(self, "{}/model_{}.pt".format(dir_path,epoch))
+            # torch.save(self, "{}/model_{}.pt".format(dir_path,epoch))
 
 
 

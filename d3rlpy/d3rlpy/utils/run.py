@@ -1,10 +1,10 @@
 import subprocess
 
-def run(device, python_file, eval_file, save_dir, env_name, lr, policy_path, seed, algo):
+def run(device, python_file, eval_file, save_dir, env_name, lr, policy_path, seed, algo, epoch=0):
     commands = ["CUDA_VISIBLE_DEVICES={} {} {} --save_dir={}\
                 --env_name={} --d4rl_policy_filename={} \
                 --target_policy_std=0.0 --seed={} --algo={} \
-                --noise_scale=0.0 --lr={}".format(device, python_file, eval_file, save_dir, env_name, policy_path, seed, algo, lr)]
+                --noise_scale=0.0 --lr={} --epoch={}".format(device, python_file, eval_file, save_dir, env_name, policy_path, seed, algo, lr, epoch)]
 
     for command in commands:
         subprocess.run(command, shell=True)

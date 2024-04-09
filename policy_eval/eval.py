@@ -85,6 +85,7 @@ flags.DEFINE_boolean('bootstrap', False,
 flags.DEFINE_enum('algo', 'fqe', ['fqe', 'dual_dice', 'mb', 'iw', 'dr'],
                   'Algorithm for policy evaluation.')
 flags.DEFINE_float('noise_scale', 0.25, 'Noise scaling for data augmentation.')
+flags.DEFINE_integer('epoch', 0, 'Epoch of training')
 
 
 def make_hparam_string(json_parameters=None, **hparam_str_dict):
@@ -306,12 +307,20 @@ def main(_):
   # store pred_returns into ope.csv
   dir_path, _ = os.path.split(FLAGS.d4rl_policy_filename)
 
-  with open("{}/ope.csv".format(dir_path), 'w', newline='') as file:
-    writer = csv.writer(file)
-    writer.writerow(["Estimate"])
-  with open("{}/ope.csv".format(dir_path), 'a', newline='') as file:
-    writer = csv.writer(file)
-    writer.writerow([pred_returns])
+  if FLAGS.epoch == 0:
+    with open("{}/ope.csv".format(dir_path), 'w', newline='') as file:
+      writer = csv.writer(file)
+      writer.writerow(["Estimate"])
+    with open("{}/ope.csv".format(dir_path), 'a', newline='') as file:
+      writer = csv.writer(file)
+      writer.writerow([pred_returns])
+  else:
+    with open("{}/ope_{}.csv".format(dir_path, FLAGS.epoch), 'w', newline='') as file:
+      writer = csv.writer(file)
+      writer.writerow(["Estimate"])
+    with open("{}/ope_{}.csv".format(dir_path, FLAGS.epoch), 'a', newline='') as file:
+      writer = csv.writer(file)
+      writer.writerow([pred_returns])
 
 if __name__ == '__main__':
   app.run(main)
