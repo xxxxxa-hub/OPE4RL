@@ -13,15 +13,15 @@ from save import process_baseline1, process_baseline2
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, default="halfcheetah-medium-replay-v2")
-    parser.add_argument("--method", type=str, default="baseline2")
+    parser.add_argument("--dataset", type=str, default="halfcheetah-medium-replay-v0")
     parser.add_argument("--algo", type=str, default="mb")
+    parser.add_argument("--method", type=str, default="baseline1")
     parser.add_argument("--seed", type=int, default=1)
-    parser.add_argument("--epoch", type=int, default=80)
+    parser.add_argument("--epoch", type=int, default=120)
     args = parser.parse_args()
     
     method = args.method
-    save_dir = "/home/xiaoan/checkpoints_v5"
+    save_dir = "/home/xiaoan/checkpoints_v7"
     dataset = args.dataset
     python_file = "/home/xiaoan/miniconda3/envs/ope/bin/python"
     eval_file = "/home/xiaoan/OPE4RL/policy_eval/eval.py"
@@ -29,7 +29,7 @@ def main():
     algo = args.algo
     seed = args.seed
 
-    env = gym.make("halfcheetah-medium-replay-v2") # Pendulum-v1
+    env = gym.make("halfcheetah-medium-replay-v0")
     d3rlpy.seed(0)
     d3rlpy.envs.seed_env(env, 0)
 
@@ -68,8 +68,13 @@ def main():
     evaluator = d3rlpy.metrics.EnvironmentEvaluator(env,gamma=0.995,n_trials=500)
     test_score_1_mean, test_score_1_std, test_score_mean, test_score_std, _ = evaluator(model)
 
-    # print("Return mean when gamma = 1.0:", test_score_1_mean)
-    # print("Return std when gamma = 1.0:", test_score_1_std)
+    print("Epoch: {}".format(args.epoch))
+    print("Method: {}".format(args.method))
+    print("Seed: {}".format(args.seed))
+    print("-"*30)
+    
+    print("Return mean when gamma = 1.0:", test_score_1_mean)
+    print("Return std when gamma = 1.0:", test_score_1_std)
     print("Return mean when gamma = 0.995:", test_score_mean)
     print("Return std when gamma = 0.995:", test_score_std)
     

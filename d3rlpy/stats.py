@@ -1,5 +1,10 @@
 from scipy.stats import norm
 import numpy
+from statistics import mean, stdev
+import os
+import pdb
+import re
+
 
 # 更新的5个正态分布的均值和标准差
 def get_mean_std(means, std_devs):
@@ -11,7 +16,6 @@ def get_mean_std(means, std_devs):
     std_dev_of_means = variance_of_means**0.5
 
     return mean_of_means, std_dev_of_means
-
 
 
 
@@ -35,39 +39,65 @@ def get_p_value(means_1, std_devs_1, means_2, std_devs_2):
     print("p-value:", p_value)
 
 
-def main():
-    # epoch = 60
-    means_1 = [1098.075, 1177.708, 1164.187, 1247.100, 1181.962]
-    std_1 = [20.446, 30.500, 35.012, 28.405, 29.082]
-    means_2 = [1239.301, 1230.982, 1203.047, 1304.507, 1149.060]
-    std_2 = [38.455, 66.074, 51.025, 48.298, 73.211]
+def get_mean_std_list(dir_path, index_start):
+    file_path = os.path.join(dir_path, "ops_0_{}.o".format(index_start))
+    with open(file_path, 'r') as file:
+        content = file.read()  # 读取文件所有内容
+        pattern = r"Return mean when gamma = 1.0: (\d+\.\d+)\nReturn std when gamma = 1.0: (\d+\.\d+)"
+        mean, std = re.findall(pattern, content)[0]
+    return round(float(mean), 3), round(float(std), 3)
 
-    # epoch = 80
-    # means_1 = [1182.175, 1235.075, 1227.265, 1162.205, 1215.479]
-    # std_1 = [29.246, 33.121, 29.486, 20.940, 121.350]
-    # means_2 = [1380.308, 1053.945, 1321.607, 1302.515, 1289.190]
-    # std_2 = [62.002, 27.331, 24.921, 67.429, 70.636]
 
-    # epoch = 70
-    # means_1 = [1172.360, 1239.737, 1324.677, 1327.332, 1218.910]
-    # std_1 = [29.400, 28.706, 34.095, 26.368, 35.849]
-    # means_2 = [1328.114, 1042.632, 1251.311, 1357.289, 1281.402]
-    # std_2 = [35.965, 21.727, 21.900, 40.011, 33.024]
+def process(dir_path = "/home/xiaoan/OPE4RL/d3rlpy/.onager/logs/gaoqitong-exxact", 
+            index_start = 1):
 
-    # epoch = 90
-    # means_1 = [1331.974, 1226.321, 1151.242, 1277.577, 1296.386]
-    # std_1 = [46.418, 28.254, 26.058, 24.220, 29.381]
-    # means_2 = [1358.911, 1161.278, 1323.793, 1248.601, 1262.859]
-    # std_2 = [34.636, 27.651, 20.379, 35.181, 19.366]
+    means_1 = []
+    std_1 = []
+    means_2 = []
+    std_2 = []
 
-    # epoch = 100
-    # means_1 = [1309.502, 1242.752, 1277.104, 1350.904, 1180.292]
-    # std_1 = [27.482, 29.439, 22.881, 36.680, 153.136]
-    # means_2 = [1211.652, 1315.595, 1340.912, 1248.683, 1213.936]
-    # std_2 = [86.680, 33.478, 47.810, 43.023, 17.301]
+    for i in range(index_start, index_start + 10 ,2):
+        mean, std = get_mean_std_list(dir_path, i)
+        means_1.append(mean)
+        std_1.append(std)
+    
+    for i in range(index_start + 1, index_start + 11, 2):
+        mean, std = get_mean_std_list(dir_path, i)
+        means_2.append(mean)
+        std_2.append(std)
 
     get_p_value(means_1, std_1, means_2, std_2)
-    print(numpy.mean(means_1))
-    print(numpy.mean(means_2))
+
+def main():
+    # halfcheetah-medium-replay-v0 100 200 1 abs no-clip decay
+    # Epoch 110
+    # means_1 = [1026.294, 985.780, 1037.592, 999.773, 1030.151]
+    # std_1 = [41.198, 25.288, 21.621, 18.914, 33.439]
+    # means_2 = [1038.318, 1050.075, 1053.654, 1013.114, 1046.343]
+    # std_2 = [23.797, 28.678, 23.739, 20.936, 22.270]
+
+    # Epoch 120
+    # means_1 = [1068.838, 1029.405, 994.092, 1006.035, 1065.968]
+    # std_1 = [22.248, 22.357, 27.002, 24.742, 27.699]
+    # means_2 = [1075.933, 1047.008, 1047.118, 1036.374, 1037.433]
+    # std_2 = [22.924, 24.018, 20.496, 31.950, 24.185]
+
+    # Epoch 130
+    # means_1 = [1035.069, 1018.000, 1023.716, 1004.055, 1044.876]
+    # std_1 = [19.922, 21.344, 20.756, 21.297, 22.947]
+    # means_2 = [1074.580, 1052.417, 1071.788, 1051.097, 1054.403]
+    # std_2 = [25.769, 41.927, 29.753, 25.212, 21.743]
+
+    # Epoch 140
+    # means_1 = [1077.480, 1043.900, 1050.695, 1015.722, 1039.474]
+    # std_1 = [41.961, 23.964, 36.448, 24.945, 23.748]
+    # means_2 = [1079.939, 1054.581, 1057.848, 1057.510, 1063.571]
+    # std_2 = [23.949,23.681, 35.020, 23.117, 21.339]
+
+    # get_p_value(means_1, std_1, means_2, std_2)
+
+    process(index_start=51)
+    
+
 if __name__ =="__main__":
     main()

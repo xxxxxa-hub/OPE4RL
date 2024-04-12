@@ -23,22 +23,22 @@ def main() -> None:
     parser.add_argument("--batch_size", type=int, default=256)
     
     # Hyper-parameter for 1SAC+incentive
-    parser.add_argument("--temp", type=float, default=0.2)
+    # parser.add_argument("--temp", type=float, default=0.2)
     # Hyper-parameter for 2SAC+incentive
-    parser.add_argument("--ratio", type=int, default=1)
+    # parser.add_argument("--ratio", type=int, default=1)
     
     # Hyper-parameter for pre-trained estimator
     parser.add_argument("--estimator_lr", type=float, default=0.003)
     
     # Environment path
-    parser.add_argument("--save_dir", type=str, default="/home/xiaoan/checkpoints_v6")
+    parser.add_argument("--save_dir", type=str, default="/home/xiaoan/checkpoints_v7")
     parser.add_argument("--python_file", type=str, default="/home/xiaoan/miniconda3/envs/ope/bin/python")
     parser.add_argument("--eval_file", type=str, default="/home/xiaoan/OPE4RL/policy_eval/eval.py")
     
     # Configuration of training
-    parser.add_argument("--collect_epoch", type=int, default=0)
-    parser.add_argument("--n_epoch", type=int, default=1250)
-    parser.add_argument("--n_episodes", type=int, default=10)
+    parser.add_argument("--collect_epoch", type=int, default=100)
+    parser.add_argument("--n_epoch", type=int, default=200)
+    parser.add_argument("--n_episodes", type=int, default=1)
     parser.add_argument("--algo", type=str, default="mb") # "iw" or "mb"
     
     parser.add_argument('--upload', dest='upload', action='store_true', help='Enable upload')
@@ -46,7 +46,7 @@ def main() -> None:
     parser.add_argument('--collect', dest='collect', action='store_true', help='Enable collect')
     parser.add_argument('--no-collect', dest='collect', action='store_false', help='Disable collect')
     parser.set_defaults(upload=True)
-    parser.set_defaults(collect=False)
+    parser.set_defaults(collect=True)
 
     args = parser.parse_args()
 
@@ -74,41 +74,41 @@ def main() -> None:
         batch_size=args.batch_size,
     ).create(device=args.gpu)
 
-    sac2 = d3rlpy.algos.SACConfig(
-        actor_learning_rate=args.lr,
-        critic_learning_rate=args.lr,
-        temp_learning_rate=3e-4,
-        batch_size=args.batch_size,
-    ).create(device=args.gpu)
+    # sac2 = d3rlpy.algos.SACConfig(
+    #     actor_learning_rate=args.lr,
+    #     critic_learning_rate=args.lr,
+    #     temp_learning_rate=3e-4,
+    #     batch_size=args.batch_size,
+    # ).create(device=args.gpu)
 
-    if args.method == "new":
-        buffer = ReplayBuffer_(capacity=1280000)
-        model = Model(sac1=sac1,sac2=sac2)
-        model.fit(
-            dataset=d4rl_dataset,
-            buffer=buffer,
-            n_epoch=args.n_epoch,
-            save_interval=10,
-            evaluators={"environment": d3rlpy.metrics.EnvironmentEvaluator(env,gamma=0.995,n_trials=args.n_episodes)},
-            dir_path="{}/{}/{}/{}-{}-{}-{}-{}-{}/seed{}/{}-{}-{}".format(args.save_dir, args.method, args.dataset, 
-                                                                    args.actor_lr,args.critic_lr,
-                                                                    args.decay_epoch, args.lr_decay, args.ratio, args.temp,
-                                                                    args.seed, args.algo, args.estimator_lr, 
-                                                                    args.estimator_lr_decay),
-            seed = args.seed,
-            env_name = args.dataset,
-            decay_epoch = args.decay_epoch,
-            lr_decay = args.lr_decay,
-            collect_epoch = args.collect_epoch,
-            estimator_lr = args.estimator_lr,
-            estimator_lr_decay = args.estimator_lr_decay,
-            algo = args.algo,
-            ratio = args.ratio,
-            temp = args.temp,
-            upload = args.upload,
-            collect = args.collect
-        )
-    elif args.method == "baseline1":
+    # if args.method == "new":
+    #     buffer = ReplayBuffer_(capacity=1280000)
+    #     model = Model(sac1=sac1,sac2=sac2)
+    #     model.fit(
+    #         dataset=d4rl_dataset,
+    #         buffer=buffer,
+    #         n_epoch=args.n_epoch,
+    #         save_interval=10,
+    #         evaluators={"environment": d3rlpy.metrics.EnvironmentEvaluator(env,gamma=0.995,n_trials=args.n_episodes)},
+    #         dir_path="{}/{}/{}/{}-{}-{}-{}-{}-{}/seed{}/{}-{}-{}".format(args.save_dir, args.method, args.dataset, 
+    #                                                                 args.actor_lr,args.critic_lr,
+    #                                                                 args.decay_epoch, args.lr_decay, args.ratio, args.temp,
+    #                                                                 args.seed, args.algo, args.estimator_lr, 
+    #                                                                 args.estimator_lr_decay),
+    #         seed = args.seed,
+    #         env_name = args.dataset,
+    #         decay_epoch = args.decay_epoch,
+    #         lr_decay = args.lr_decay,
+    #         collect_epoch = args.collect_epoch,
+    #         estimator_lr = args.estimator_lr,
+    #         estimator_lr_decay = args.estimator_lr_decay,
+    #         algo = args.algo,
+    #         ratio = args.ratio,
+    #         temp = args.temp,
+    #         upload = args.upload,
+    #         collect = args.collect
+    #     )
+    if args.method == "baseline1":
         sac1.fit(
             method=args.method,
             dataset=d4rl_dataset,
@@ -123,7 +123,6 @@ def main() -> None:
             env_name = args.dataset,
             collect_epoch = args.collect_epoch,
             estimator_lr = args.estimator_lr,
-            temp=args.temp,
             algo = args.algo,
             upload = args.upload,
             collect = args.collect
@@ -143,7 +142,6 @@ def main() -> None:
             env_name = args.dataset,
             collect_epoch = args.collect_epoch,
             estimator_lr = args.estimator_lr,
-            temp=args.temp,
             algo = args.algo,
             upload = args.upload,
             collect = args.collect

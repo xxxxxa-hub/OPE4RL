@@ -397,7 +397,6 @@ class QLearningAlgoBase(
         env_name: str = None,
         collect_epoch: int = 50,
         estimator_lr: float = 0.003,
-        temp: float = 1.0,
         algo: str = None,
         upload: bool = False,
         collect: bool = False
@@ -464,7 +463,6 @@ class QLearningAlgoBase(
                 env_name=env_name,
                 collect_epoch=collect_epoch,
                 estimator_lr=estimator_lr,
-                temp=temp,
                 algo=algo,
                 upload=upload,
                 collect=collect
@@ -624,6 +622,7 @@ class QLearningAlgoBase(
                             "critic_loss": np.mean(epoch_loss["critic_loss"]),
                             "temp_loss": np.mean(epoch_loss["temp_loss"]),
                             "temp": np.mean(epoch_loss["temp"]),
+                            "Oracle_1.0": test_score_1,
                             "Oracle_0.995": test_score})
             
             elif epoch > collect_epoch:
@@ -646,9 +645,10 @@ class QLearningAlgoBase(
                             "critic_loss": np.mean(epoch_loss["critic_loss"]),
                             "temp_loss": np.mean(epoch_loss["temp_loss"]),
                             "temp": np.mean(epoch_loss["temp"]),
+                            "Oracle_1.0": test_score_1,
                             "Oracle_0.995": test_score})
                 
-                if epoch % 20 == 0:
+                if epoch % 10 == 0:
                     torch.save(self, "{}/model_{}.pt".format(dir_path, epoch))
             
 
@@ -673,7 +673,6 @@ class QLearningAlgoBase(
             env_name: str = None,
             collect_epoch: int = 50,
             estimator_lr: float = 0.003,
-            temp: float = 1.0,
             algo: str = None,
             upload: bool = False,
             collect: bool = False
@@ -734,7 +733,7 @@ class QLearningAlgoBase(
                 new_run = wandb.init(
                     project="{}-{}-{}".format(env_name, method, save_dir.split("_")[-1]),
                     name="Baseline2-{}-{}-{}".format(self.config.actor_learning_rate, algo, seed), # temp
-                    config={"actor_learning_rate": self.config.actor_learning_rate,
+                    config={"learning_rate": self.config.actor_learning_rate,
                             # "temp": temp,
                             "algo": algo,
                             "seed": seed}
@@ -762,13 +761,15 @@ class QLearningAlgoBase(
                 )
 
 
-                if len(reward_incentive_list) >= 3:
+                if len(reward_incentive_list) >= 10:
                     reward_incentive_reduce_mean = reward_incentive - torch.tensor(np.mean(reward_incentive_list))
                     normalized_reward_incentive = reward_incentive_reduce_mean / torch.std(torch.tensor(reward_incentive_list), unbiased=False)
                 
                 cdf_value = norm.cdf(normalized_reward_incentive.cpu(), loc=0.0, scale=1.0)
-                # cdf_value = np.clip(cdf_value,0.2,0.8)
-                
+                # cdf_value = np.clip(cdf_value,0.1,0.9)
+
+                cdf_weight = 0.95 ** (epoch - collect_epoch) if epoch > collect_epoch else 1.0
+
                 for itr in range_gen:
                     # pick transitions
                     states, actions, next_states, rewards, masks, _, _ = next(dataloader)
@@ -780,7 +781,8 @@ class QLearningAlgoBase(
                     masks = masks.to(self._device)
 
                     loss = self.update(states=states, actions=actions, next_states=next_states, 
-                                       rewards=rewards.min() + 2 * (rewards - rewards.min()) * cdf_value, 
+                                       rewards=rewards.min() + 2 * (rewards - rewards.min()) * 
+                                       (cdf_weight * cdf_value + (1 - cdf_weight) * 0.5), 
                                        masks=masks) # rewards + temp * normalized_reward_incentive
                     # record metrics
                     for name, val in loss.items():
@@ -828,7 +830,7 @@ class QLearningAlgoBase(
                         algo=algo)
 
                     estimate = pd.read_csv("{}/ope.csv".format(dir_path)).iloc[0,0]
-                    reward_incentive = np.float32((estimate - test_score * (1-evaluators["environment"]._gamma)) ** 2)
+                    reward_incentive = np.float32(abs(estimate - test_score * (1-evaluators["environment"]._gamma)))
                     reward_incentive = -reward_incentive
 
                     # store new reward_incentive into reward_list
@@ -854,6 +856,7 @@ class QLearningAlgoBase(
                                 "normalized_reward_incentive": normalized_reward_incentive,
                                 "cdf_value": cdf_value,
                                 "Estimate": estimate,
+                                "Oracle_1.0": test_score_1,
                                 "Oracle_0.995": test_score})
                 
                 # difference is we do not have real value, so we use real value at 100 epoch
@@ -875,7 +878,7 @@ class QLearningAlgoBase(
                         algo=algo)
 
                     estimate = pd.read_csv("{}/ope.csv".format(dir_path)).iloc[0,0]
-                    reward_incentive = np.float32((estimate - test_score * (1-evaluators["environment"]._gamma)) ** 2)
+                    reward_incentive = np.float32(abs(estimate - test_score * (1-evaluators["environment"]._gamma)))
                     reward_incentive = -reward_incentive
 
                     # store new reward_incentive into reward_list
@@ -901,6 +904,7 @@ class QLearningAlgoBase(
                                 "normalized_reward_incentive": normalized_reward_incentive,
                                 "cdf_value": cdf_value,
                                 "Estimate": estimate,
+                                "Oracle_1.0": test_score_1_after_100,
                                 "Oracle_0.995": test_score_after_100})
                     
 
