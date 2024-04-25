@@ -42,7 +42,7 @@ from ...logging import (
     FileAdapterFactory,
     LoggerAdapterFactory,
 )
-from ...metrics import EvaluatorProtocol, evaluate_qlearning_with_environment
+from ...metrics import EvaluatorProtocol, evaluate_qlearning_with_environment_max_steps, evaluate_qlearning_with_environment_n_trials
 from ...models.torch import Policy
 from ...torch_utility import (
     TorchMiniBatch,
@@ -550,6 +550,10 @@ class QLearningAlgoBase(
             # dict to add incremental mean losses to epoch
             epoch_loss = defaultdict(list)
             
+            # End the current trajectory
+            if dataset["terminals"][-1] != True:
+                dataset["timeouts"][-1] = True
+
             behavior_dataset = D4rlDataset(
                 dataset,
                 normalize_states=False,
@@ -602,7 +606,7 @@ class QLearningAlgoBase(
                 if evaluators:
                     for name, evaluator in evaluators.items():
                         test_score_1, _, test_score, _, transitions = evaluator(self) # rollout 10条trajectory时长3.75s
-                
+
                 if collect:
                     for k,v in transitions.items():
                         dataset[k] = np.append(dataset[k], v, axis=0)
@@ -743,6 +747,11 @@ class QLearningAlgoBase(
             for epoch in range(1, n_epoch + 1):
                 # dict to add incremental mean losses to epoch
                 epoch_loss = defaultdict(list)
+
+                # End the current trajectory
+                if dataset["terminals"][-1] != True:
+                    dataset["timeouts"][-1] = True
+                
 
                 behavior_dataset = D4rlDataset(
                 dataset,
@@ -1166,13 +1175,7 @@ class QLearningAlgoBase(
             Dictionary of metrics.
         """
         assert self._impl, IMPL_NOT_INITIALIZED_ERROR
-        # torch_batch = TorchMiniBatch.from_batch(
-        #     batch=batch,
-        #     device=self._device,
-        #     observation_scaler=self._config.observation_scaler,
-        #     action_scaler=self._config.action_scaler,
-        #     reward_scaler=self._config.reward_scaler,
-        # )
+
         loss = self._impl.inner_update(states, actions, next_states, rewards, masks, self._grad_step)
         self._grad_step += 1
         return loss

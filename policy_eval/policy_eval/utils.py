@@ -78,6 +78,7 @@ def estimate_monte_carlo_returns(env,
 
 def get_d4rl_policy(env, weights, is_dapg=False):
   """Creates TF Agents policy based from D4RL saved weights."""
+  print(weights["fc0/weight"].shape)
   hidden_dims = []
   fc_idx = 0
   while 'fc%d/weight' % fc_idx in weights:

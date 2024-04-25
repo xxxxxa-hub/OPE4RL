@@ -61,7 +61,7 @@ class DDPGBaseImpl(
 
         q_tpn = self.compute_target(next_states)
 
-        loss = self.compute_critic_loss(states, actions, rewards, masks, q_tpn)
+        loss = self.compute_critic_loss(states, actions, next_states, rewards, masks, q_tpn)
 
         loss.backward()
         self._modules.critic_optim.step()
@@ -69,7 +69,7 @@ class DDPGBaseImpl(
         return {"critic_loss": float(loss.cpu().detach().numpy())}
 
     def compute_critic_loss(
-        self, states, actions, rewards, masks, q_tpn: torch.Tensor
+        self, states, actions, next_states, rewards, masks, q_tpn: torch.Tensor
     ) -> torch.Tensor:
         return self._q_func_forwarder.compute_error(
             states=states,

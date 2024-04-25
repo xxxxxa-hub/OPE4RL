@@ -46,7 +46,7 @@ from ...logging import (
     FileAdapterFactory,
     LoggerAdapterFactory,
 )
-from ...metrics import EvaluatorProtocol, evaluate_qlearning_with_environment
+from ...metrics import EvaluatorProtocol, evaluate_qlearning_with_environment_max_steps, evaluate_qlearning_with_environment_n_trials
 from ...models.torch import Policy, build_squashed_gaussian_distribution
 from ...torch_utility import (
     TorchMiniBatch,

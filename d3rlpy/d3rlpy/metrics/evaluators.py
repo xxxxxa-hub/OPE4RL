@@ -11,7 +11,7 @@ from ..dataset import (
     TransitionPickerProtocol,
 )
 from ..interface import QLearningAlgoProtocol
-from .utility import evaluate_qlearning_with_environment
+from .utility import evaluate_qlearning_with_environment_max_steps, evaluate_qlearning_with_environment_n_trials
 
 __all__ = [
     "EvaluatorProtocol",
@@ -517,28 +517,40 @@ class EnvironmentEvaluator(EvaluatorProtocol):
     """
     _env: gym.Env[Any, Any]
     _n_trials: int
+    _max_steps: int
     _epsilon: float
     _gamma: float
 
     def __init__(
         self,
         env: gym.Env[Any, Any],
-        n_trials: int = 10,
+        n_trials: int = 0,
+        max_steps: int = 0,
         epsilon: float = 0.0,
         gamma: float = 1.0
     ):
         self._env = env
         self._n_trials = n_trials
+        self._max_steps = max_steps
         self._epsilon = epsilon
         self._gamma = gamma
 
     def __call__(
         self, algo: QLearningAlgoProtocol
     ) -> List[float]:
-        return evaluate_qlearning_with_environment(
-            algo=algo,
-            env=self._env,
-            n_trials=self._n_trials,
-            epsilon=self._epsilon,
-            gamma=self._gamma
-        )
+        if self._n_trials == 0:
+            return evaluate_qlearning_with_environment_max_steps(
+                algo=algo,
+                env=self._env,
+                max_steps=self._max_steps,
+                epsilon=self._epsilon,
+                gamma=self._gamma
+            )
+        elif self._max_steps == 0:
+            return evaluate_qlearning_with_environment_n_trials(
+                algo=algo,
+                env=self._env,
+                n_trials=self._n_trials,
+                epsilon=self._epsilon,
+                gamma=self._gamma
+            )

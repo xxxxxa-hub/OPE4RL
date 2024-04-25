@@ -63,16 +63,12 @@ class CQLImpl(SACImpl):
         self._n_action_samples = n_action_samples
         self._soft_q_backup = soft_q_backup
 
-    def compute_critic_loss(
-        self, batch: TorchMiniBatch, q_tpn: torch.Tensor
-    ) -> torch.Tensor:
-        loss = super().compute_critic_loss(batch, q_tpn)
-        conservative_loss = self._compute_conservative_loss(
-            batch.observations, batch.actions, batch.next_observations
-        )
+    def compute_critic_loss(self, states, actions, next_states, rewards, masks, q_tpn) -> torch.Tensor:
+        loss = super().compute_critic_loss(states, actions, next_states, rewards, masks, q_tpn)
+        conservative_loss = self._compute_conservative_loss(states, actions, next_states)
         return loss + conservative_loss
 
-    def update_alpha(self, batch: TorchMiniBatch) -> Dict[str, float]:
+    def update_alpha(self, states, actions, next_states) -> Dict[str, float]:
         assert self._modules.alpha_optim
 
         # Q function should be inference mode for stability
@@ -81,9 +77,7 @@ class CQLImpl(SACImpl):
         self._modules.alpha_optim.zero_grad()
 
         # the original implementation does scale the loss value
-        loss = -self._compute_conservative_loss(
-            batch.observations, batch.actions, batch.next_observations
-        )
+        loss = -self._compute_conservative_loss(states, actions, next_states)
 
         loss.backward()
         self._modules.alpha_optim.step()
@@ -178,39 +172,35 @@ class CQLImpl(SACImpl):
 
         return clipped_alpha * (scaled_loss - self._alpha_threshold)
 
-    def compute_target(self, batch: TorchMiniBatch) -> torch.Tensor:
+    def compute_target(self, next_states) -> torch.Tensor:
         if self._soft_q_backup:
-            target_value = super().compute_target(batch)
+            target_value = super().compute_target(next_states)
         else:
-            target_value = self._compute_deterministic_target(batch)
+            target_value = self._compute_deterministic_target(next_states)
         return target_value
 
-    def _compute_deterministic_target(
-        self, batch: TorchMiniBatch
-    ) -> torch.Tensor:
+    def _compute_deterministic_target(self, next_states) -> torch.Tensor:
         with torch.no_grad():
-            action = self._modules.policy(batch.next_observations).squashed_mu
+            action = self._modules.policy(next_states).squashed_mu
             return self._targ_q_func_forwarder.compute_target(
-                batch.next_observations,
+                next_states,
                 action,
                 reduction="min",
             )
 
-    def inner_update(
-        self, batch: TorchMiniBatch, grad_step: int
-    ) -> Dict[str, float]:
+    def inner_update(self, states, actions, next_states, rewards, masks, grad_step: int) -> Dict[str, float]:
         metrics = {}
 
         # lagrangian parameter update for SAC temperature
         if self._modules.temp_optim:
-            metrics.update(self.update_temp(batch))
+            metrics.update(self.update_temp(states))
 
         # lagrangian parameter update for conservative loss weight
         if self._modules.alpha_optim:
-            metrics.update(self.update_alpha(batch))
+            metrics.update(self.update_alpha(states))
 
-        metrics.update(self.update_critic(batch))
-        metrics.update(self.update_actor(batch))
+        metrics.update(self.update_critic(states, actions, next_states, rewards, masks))
+        metrics.update(self.update_actor(states))
 
         self.update_critic_target()
 

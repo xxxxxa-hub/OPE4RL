@@ -35,7 +35,7 @@ def process_baseline2(save_dir, dataset, python_file, eval_file, lr, algo):
 
     for hp in hp_list:
         for seed in range(1,6):
-            for epoch in range(110,210,10):
+            for epoch in range(110,180,10):
                 seed_dir_path = os.path.join(dir_path, hp, "seed{}".format(seed))
 
                 # save model to pkl

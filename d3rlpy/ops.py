@@ -17,7 +17,7 @@ def main():
     parser.add_argument("--algo", type=str, default="mb")
     parser.add_argument("--method", type=str, default="baseline1")
     parser.add_argument("--seed", type=int, default=1)
-    parser.add_argument("--epoch", type=int, default=120)
+    parser.add_argument("--epoch", type=int, default=110)
     args = parser.parse_args()
     
     method = args.method
@@ -29,7 +29,7 @@ def main():
     algo = args.algo
     seed = args.seed
 
-    env = gym.make("halfcheetah-medium-replay-v0")
+    env = gym.make(args.dataset)
     d3rlpy.seed(0)
     d3rlpy.envs.seed_env(env, 0)
 
@@ -65,9 +65,10 @@ def main():
 
     best_hp_model = os.path.join(dir_path, hp_list[index],"seed{}".format(seed), "model_{}.pt".format(args.epoch))
     model = torch.load(best_hp_model)
-    evaluator = d3rlpy.metrics.EnvironmentEvaluator(env,gamma=0.995,n_trials=500)
+    evaluator = d3rlpy.metrics.EnvironmentEvaluator(env,gamma=0.995, n_trials=500)
     test_score_1_mean, test_score_1_std, test_score_mean, test_score_std, _ = evaluator(model)
 
+    print(best_hp_model)
     print("Epoch: {}".format(args.epoch))
     print("Method: {}".format(args.method))
     print("Seed: {}".format(args.seed))
@@ -75,8 +76,8 @@ def main():
     
     print("Return mean when gamma = 1.0:", test_score_1_mean)
     print("Return std when gamma = 1.0:", test_score_1_std)
-    print("Return mean when gamma = 0.995:", test_score_mean)
-    print("Return std when gamma = 0.995:", test_score_std)
+    # print("Return mean when gamma = 0.995:", test_score_mean)
+    # print("Return std when gamma = 0.995:", test_score_std)
     
     
 
