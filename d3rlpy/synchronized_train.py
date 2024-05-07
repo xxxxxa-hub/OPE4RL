@@ -9,12 +9,14 @@ import torch
 from d3rlpy.dataset import ReplayBuffer_, D4rlDataset, get_cartpole, get_pendulum, infinite_loader
 from d3rlpy.algos.qlearning.model_sac import Model
 from torch.utils.data import DataLoader
+from utils import SynchronizedExperiment
+from torch.multiprocessing import Process, set_start_method
 
 # 0, 1, 1234
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, default="walker2d-medium-v0")
-    parser.add_argument("--method", type=str, default="baseline1") # "new" or "baseline"
+    parser.add_argument("--method", type=str, default="baseline2") # "new" or "baseline"
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--gpu", type=str, default="cuda:1")
     
@@ -70,62 +72,14 @@ def main() -> None:
     else:
         conservative_weight = 5.0
 
+    experiment = SynchronizedExperiment(lr_range=[1e-4, 2e-4, 3e-4, 5e-4, 7e-4, 1e-3], # , 3e-4, 5e-4, 7e-4, 1e-3
+                                        encoder=encoder,
+                                        batch_size=args.batch_size,
+                                        conservative_weight=conservative_weight,
+                                        device=args.gpu)
 
-    cql = d3rlpy.algos.CQLConfig(
-        actor_learning_rate=args.lr,
-        critic_learning_rate=args.lr,
-        temp_learning_rate=1e-4,
-        actor_encoder_factory=encoder,
-        critic_encoder_factory=encoder,
-        batch_size=args.batch_size,
-        n_action_samples=10,
-        alpha_learning_rate=0.0,
-        conservative_weight=conservative_weight,
-    ).create(device=args.gpu)
-
-    # sac1 = d3rlpy.algos.SACConfig(
-    #     actor_learning_rate=args.lr,
-    #     critic_learning_rate=args.lr,
-    #     temp_learning_rate=3e-4,
-    #     batch_size=args.batch_size,
-    # ).create(device=args.gpu)
-
-    # sac2 = d3rlpy.algos.SACConfig(
-    #     actor_learning_rate=args.lr,
-    #     critic_learning_rate=args.lr,
-    #     temp_learning_rate=3e-4,
-    #     batch_size=args.batch_size,
-    # ).create(device=args.gpu)
-
-    # if args.method == "new":
-    #     buffer = ReplayBuffer_(capacity=1280000)
-    #     model = Model(sac1=sac1,sac2=sac2)
-    #     model.fit(
-    #         dataset=d4rl_dataset,
-    #         buffer=buffer,
-    #         n_epoch=args.n_epoch,
-    #         save_interval=10,
-    #         evaluators={"environment": d3rlpy.metrics.EnvironmentEvaluator(env,gamma=0.995,n_trials=args.n_episodes)},
-    #         dir_path="{}/{}/{}/{}-{}-{}-{}-{}-{}/seed{}/{}-{}-{}".format(args.save_dir, args.method, args.dataset, 
-    #                                                                 args.actor_lr,args.critic_lr,
-    #                                                                 args.decay_epoch, args.lr_decay, args.ratio, args.temp,
-    #                                                                 args.seed, args.algo, args.estimator_lr, 
-    #                                                                 args.estimator_lr_decay),
-    #         seed = args.seed,
-    #         env_name = args.dataset,
-    #         decay_epoch = args.decay_epoch,
-    #         lr_decay = args.lr_decay,
-    #         collect_epoch = args.collect_epoch,
-    #         estimator_lr = args.estimator_lr,
-    #         estimator_lr_decay = args.estimator_lr_decay,
-    #         algo = args.algo,
-    #         ratio = args.ratio,
-    #         temp = args.temp,
-    #         upload = args.upload,
-    #         collect = args.collect
-    #     )
     if args.method == "baseline1":
-        cql.fit(
+        experiment.fit(
             method=args.method,
             dataset=d4rl_dataset,
             n_epoch=args.n_epoch,
@@ -133,8 +87,6 @@ def main() -> None:
             python_file=args.python_file,
             eval_file=args.eval_file,
             save_dir=args.save_dir,
-            dir_path="{}/{}/{}/{}/seed{}".format(args.save_dir, args.method, args.dataset, 
-                                                          args.lr, args.seed),
             seed = args.seed,
             env_name = args.dataset,
             collect_epoch = args.collect_epoch,
@@ -144,7 +96,7 @@ def main() -> None:
             collect = args.collect
         )
     elif args.method == "baseline2":
-        cql.fit(
+        experiment.fit(
             method=args.method,
             dataset=d4rl_dataset,
             n_epoch=args.n_epoch,
@@ -152,8 +104,6 @@ def main() -> None:
             python_file=args.python_file,
             eval_file=args.eval_file,
             save_dir=args.save_dir,
-            dir_path="{}/{}/{}/{}/{}/seed{}".format(args.save_dir, args.method, args.dataset, 
-                                                          args.algo, args.lr, args.seed),
             seed = args.seed,
             env_name = args.dataset,
             collect_epoch = args.collect_epoch,
@@ -166,4 +116,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    set_start_method('spawn', force=True)
     main()

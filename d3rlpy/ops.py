@@ -13,7 +13,7 @@ from save import process_baseline1, process_baseline2
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, default="halfcheetah-medium-replay-v0")
+    parser.add_argument("--dataset", type=str, default="walker2d-medium-v0")
     parser.add_argument("--algo", type=str, default="mb")
     parser.add_argument("--method", type=str, default="baseline1")
     parser.add_argument("--seed", type=int, default=1)
@@ -21,7 +21,7 @@ def main():
     args = parser.parse_args()
     
     method = args.method
-    save_dir = "/home/xiaoan/checkpoints_v7"
+    save_dir = "/home/xiaoan/checkpoints_v11"
     dataset = args.dataset
     python_file = "/home/xiaoan/miniconda3/envs/ope/bin/python"
     eval_file = "/home/xiaoan/OPE4RL/policy_eval/eval.py"

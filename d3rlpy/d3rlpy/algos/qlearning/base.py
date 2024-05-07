@@ -64,7 +64,9 @@ from .explorers import Explorer
 from ...utils import save_policy,run
 import pandas as pd
 from scipy.stats import norm
-
+import threading
+from queue import Queue
+import random
 
 
 __all__ = [
@@ -548,12 +550,13 @@ class QLearningAlgoBase(
 
         for epoch in range(1, n_epoch + 1):
             # dict to add incremental mean losses to epoch
+            
             epoch_loss = defaultdict(list)
             
             # End the current trajectory
             if dataset["terminals"][-1] != True:
                 dataset["timeouts"][-1] = True
-
+            pdb.set_trace()
             behavior_dataset = D4rlDataset(
                 dataset,
                 normalize_states=False,
@@ -561,7 +564,7 @@ class QLearningAlgoBase(
                 noise_scale=0.0,
                 bootstrap=False)
             
-            dataloader = DataLoader(behavior_dataset, batch_size=self.config.batch_size, shuffle=True, drop_last=True, num_workers=4)
+            dataloader = DataLoader(behavior_dataset, batch_size=self.config.batch_size, shuffle=True, drop_last=True, num_workers=0)
             dataloader = iter(dataloader)
             
             range_gen = tqdm(

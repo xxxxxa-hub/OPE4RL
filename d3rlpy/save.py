@@ -8,7 +8,7 @@ def process_baseline1(save_dir, dataset, python_file, eval_file, lr, algo):
     hp_list = os.listdir(dir_path)
 
     for hp in hp_list:
-        for seed in range(1,6):
+        for seed in range(1,4):
             for epoch in range(110,210,10):
                 seed_dir_path = os.path.join(dir_path, hp, "seed{}".format(seed))
 
@@ -34,7 +34,7 @@ def process_baseline2(save_dir, dataset, python_file, eval_file, lr, algo):
     hp_list = os.listdir(dir_path)
 
     for hp in hp_list:
-        for seed in range(1,6):
+        for seed in range(1,4):
             for epoch in range(110,180,10):
                 seed_dir_path = os.path.join(dir_path, hp, "seed{}".format(seed))
 
