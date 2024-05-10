@@ -17,6 +17,7 @@ setup(
         "colorama==0.4.6",
         "gymnasium==0.29.1",
         "dataclasses-json==0.6.2",
-        "wandb"
+        "wandb==0.17.0",
+        "scipy==1.10.1"
     ]
 )
