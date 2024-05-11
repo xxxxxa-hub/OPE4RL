@@ -7,7 +7,7 @@ def run(device, python_file, eval_file, save_dir, env_name, lr, policy_path, see
                 --noise_scale=0.0 --lr={} --epoch={}".format(device, python_file, eval_file, save_dir, env_name, policy_path, seed, algo, lr, epoch)]
 
     for command in commands:
-        subprocess.run(command, shell=True)
+        subprocess.run(command, shell=True, check=True, capture_output=True)
 
 # if __name__ == "__main__":
 #     device = 1

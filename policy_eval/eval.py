@@ -24,6 +24,7 @@ from absl import flags
 from absl import logging
 import gym
 import d4rl
+import d4rl.gym_mujoco
 from gym.wrappers import time_limit
 import numpy as np
 import tensorflow as tf

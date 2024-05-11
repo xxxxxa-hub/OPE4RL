@@ -2,7 +2,7 @@
 
 set -e
 
-# Training
+# env: train
 cd d3rlpy
 conda create -n train python=3.8
 source activate train
@@ -11,7 +11,7 @@ pip install -e .
 conda deactivate
 cd ..
 
-# OPE
+# env: ope
 conda create -n ope python=3.8
 source activate ope
 cd policy_eval
@@ -19,8 +19,6 @@ pip install tensorflow==2.6.0
 pip install d4rl==1.1
 conda install cudatoolkit cudnn
 pip install -e .
-pip install "cython<3"
-pip install patchelf==0.17.2
 pip uninstall pybullet
 if [ ! -d ~/.mujoco/mujoco210 ]; then
     wget https://mujoco.org/download/mujoco210-linux-x86_64.tar.gz
@@ -32,12 +30,12 @@ if [ ! -d ~/.mujoco/mujoco210 ]; then
     echo "LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:$HOME/.mujoco/mujoco210/bin" >> ~/.bashrc
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/nvidia
     echo "LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/lib/nvidia" >> ~/.bashrc
-    conda install -c conda-forge libstdcxx-ng=12
-    conda install -c conda-forge glew
-    conda install -c conda-forge mesalib
+    conda install -c conda-forge libstdcxx-ng=12 glew mesalib
     conda install -c menpo glfw3
     export CPATH=$CONDA_PREFIX/include
     echo "CPATH=\$CONDA_PREFIX/include" >> ~/.bashrc
+    pip install "cython<3"
+    pip install patchelf==0.17.2
 fi
 conda deactivate
 cd ..

@@ -4,8 +4,10 @@ import numpy as np
 import d3rlpy
 import pickle
 import d4rl
+import d4rl.gym_mujoco
 import gym
 import torch
+import os
 from d3rlpy.dataset import ReplayBuffer_, D4rlDataset, get_cartpole, get_pendulum, infinite_loader
 from d3rlpy.algos.qlearning.model_sac import Model
 from torch.utils.data import DataLoader
@@ -28,9 +30,9 @@ def main() -> None:
     parser.add_argument("--estimator_lr", type=float, default=0.003)
     
     # Environment path
-    parser.add_argument("--save_dir", type=str, default="/home/xiaoan/checkpoints_v11")
-    parser.add_argument("--python_file", type=str, default="/home/xiaoan/miniconda3/envs/ope/bin/python")
-    parser.add_argument("--eval_file", type=str, default="/home/xiaoan/OPE4RL/policy_eval/eval.py")
+    parser.add_argument("--save_dir", type=str, default="checkpoints_v11")
+    parser.add_argument("--python_file", type=str, default=os.path.join(os.path.dirname(os.environ["CONDA_PREFIX"]), "ope", "bin", "python"))
+    parser.add_argument("--eval_file", type=str, default="../policy_eval/eval.py")
     
     # Configuration of training
     parser.add_argument("--collect_epoch", type=int, default=100)
