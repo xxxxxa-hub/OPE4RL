@@ -1,0 +1,22 @@
+Metadata-Version: 2.1
+Name: policy_eval
+Version: 0.1
+Requires-Dist: numpy==1.21.5
+Requires-Dist: gym==0.23.0
+Requires-Dist: h5py==3.1.0
+Requires-Dist: mujoco-py==2.1.2.14
+Requires-Dist: pandas==2.0.3
+Requires-Dist: tqdm==4.66.1
+Requires-Dist: click==8.1.7
+Requires-Dist: termcolor==1.1.0
+Requires-Dist: tensorflow-addons==0.16.1
+Requires-Dist: tensorflow-probability==0.14.1
+Requires-Dist: typing-extensions==3.7.4.3
+Requires-Dist: tf-agents==0.9.0
+Requires-Dist: pygame
+Requires-Dist: protobuf==3.19.6
+Requires-Dist: keras==2.6.0
+Requires-Dist: Cython==0.29.37
+Requires-Dist: mujoco_py==2.1.2.14
+Requires-Dist: dm_control==1.0.17
+Requires-Dist: mjrl@ git+https://github.com/aravindr93/mjrl@master#egg=mjrl

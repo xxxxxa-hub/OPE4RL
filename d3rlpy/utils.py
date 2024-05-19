@@ -51,8 +51,8 @@ class SynchronizedExperiment():
                                  results_queue):
         # dict to add incremental mean losses to epoch
         # os.environ["WANDB_MODE"] = "offline"
-
-        env = gym.make(env_name)
+        _, env = d3rlpy.dataset.get_d4rl(env_name)
+        # env = gym.make(env_name)
         d3rlpy.seed(seed)
         d3rlpy.envs.seed_env(env, seed)
 
@@ -173,7 +173,8 @@ class SynchronizedExperiment():
                                  results_queue):
         # dict to add incremental mean losses to epoch
         # os.environ["WANDB_MODE"] = "offline"
-        env = gym.make(env_name)
+        # env = gym.make(env_name)
+        _, env = d3rlpy.dataset.get_d4rl(env_name)
         d3rlpy.seed(seed)
         d3rlpy.envs.seed_env(env, seed)
 
@@ -455,7 +456,7 @@ class SynchronizedExperiment():
                 LOG.debug("Models have been built.")
             else:
                 LOG.warning("Skip building models since they're already built.")
-            
+
             self.policies[lr] = cql
             self.random_states[lr] = random_state
             self.np_states[lr] = np_state

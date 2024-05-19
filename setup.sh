@@ -2,24 +2,7 @@
 
 set -e
 
-# env: train
-cd d3rlpy
-conda create -n train python=3.8
-source activate train
-pip install d4rl==1.1
-pip install -e .
-conda deactivate
-cd ..
-
-# env: ope
-conda create -n ope python=3.8
-source activate ope
-cd policy_eval
-pip install tensorflow==2.6.0
-pip install d4rl==1.1
-conda install cudatoolkit cudnn
-pip install -e .
-pip uninstall pybullet
+# configure mujoco
 if [ ! -d ~/.mujoco/mujoco210 ]; then
     wget https://mujoco.org/download/mujoco210-linux-x86_64.tar.gz
     tar -xzf mujoco210-linux-x86_64.tar.gz
@@ -34,8 +17,32 @@ if [ ! -d ~/.mujoco/mujoco210 ]; then
     conda install -c menpo glfw3
     export CPATH=$CONDA_PREFIX/include
     echo "CPATH=\$CONDA_PREFIX/include" >> ~/.bashrc
-    pip install "cython<3"
     pip install patchelf==0.17.2
 fi
+
+# get d4rl
+cd ~
+git clone https://github.com/rail-berkeley/d4rl.git
+
+
+# env: train
+conda create -n clean_train python=3.8
+source activate clean_train
+cd d3rlpy
+pip install -e .
+# install d4rl for env: train
+cd ~/d4rl
+pip install -e . --no-deps
 conda deactivate
-cd ..
+
+# env: ope
+conda create -n clean_ope python=3.8
+source activate clean_ope
+pip install tensorflow==2.6.0
+conda install cudatoolkit cudnn
+cd ~/OPE-latest/policy_eval
+pip install -e .
+# install d4rl for env: ope
+cd ~/d4rl
+pip install -e . --no-deps
+conda deactivate

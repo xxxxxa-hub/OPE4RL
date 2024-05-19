@@ -30,9 +30,9 @@ def main() -> None:
     parser.add_argument("--estimator_lr", type=float, default=0.003)
     
     # Environment path
-    parser.add_argument("--save_dir", type=str, default="checkpoints_v11")
+    parser.add_argument("--save_dir", type=str, default=os.path.join(os.path.expanduser("~"),"checkpoints_v11"))
     parser.add_argument("--python_file", type=str, default=os.path.join(os.path.dirname(os.environ["CONDA_PREFIX"]), "ope", "bin", "python"))
-    parser.add_argument("--eval_file", type=str, default="../policy_eval/eval.py")
+    parser.add_argument("--eval_file", type=str, default=os.path.join(os.path.expanduser(".."),"policy_eval", "eval.py"))
     
     # Configuration of training
     parser.add_argument("--collect_epoch", type=int, default=100)
@@ -61,10 +61,13 @@ def main() -> None:
         d3rlpy.envs.seed_env(env, args.seed)
         d4rl_dataset = get_cartpole(dataset_type=args.dataset.split("-")[1])
     else:
-        env = gym.make(args.dataset)
+        # env = gym.make(args.dataset)
+        _, env = d3rlpy.dataset.get_d4rl(args.dataset)
         d3rlpy.seed(args.seed)
         d3rlpy.envs.seed_env(env, args.seed)
         d4rl_dataset = env.get_dataset()
+        
+
 
 
     encoder = d3rlpy.models.encoders.VectorEncoderFactory([256, 256, 256])
